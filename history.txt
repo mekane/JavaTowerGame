@@ -1,0 +1,174 @@
+/*
+ * Development log and Version history for TowerGame. Started on April 19, 2007
+ * in Tegucigalpa, Honduras.
+ * author: Marty Kane
+ */
+
+v 0.0.1  4-19-2007:
+  After days playing 'Desktop Tower Defense' an on-line flash game which is an
+homage to Warcraft III tower levels, I decided to make my own version, mostly
+just to play with the A.I.
+
+  I copied the basics from two previous projects: TileGame (which didn't go 
+anywhere, but had some basic functionality), and areaBuilder, which had some
+graphics stuff. I used the same design as the areaBuilder, with a Swing app
+at the top level, and a custom Canvas extension to do the drawing. These are
+called TowerGame and GameScreen. The first thing I added to GameScreen was a
+grid of squares, stored in a 2d array and drawn to the screen. Then I worked 
+on being able to track clicks and knowing which square was clicked on. I soon
+made a Square class, to store information about individual squares, and stored
+these Objects in the array. Eventually I moved most of this code to a class
+called Board, which stores information about the playing field. Added the 
+concepts of squares being 'filled' and 'selected'. 
+
+  I created a class called Guy to represent a monster/enemy, and added code to
+make him have a starting position and an ending position. He has basic movement
+abilities, which means he walks in a straight line towards his goal, ignoring
+squares that are solid.
+
+
+
+v 0.0.2  4-20-2007:
+
+  The first thing I did was start work on a graph representation of my game 
+board. I soon relized that it was a bit redundant, and just moved the graph 
+code into the Square class. So now Squares keep track of themselves, and which
+Squares they are connected to. When a square is filled, it disconnects itself 
+from the squares surrounding it, and reconnects if the square is emptied. While
+adding this functionality, I added quite a few utility methods to the Square 
+and Board classes, mostly for passing information back and forth.
+
+  Once I had a good graph representation of my board, I started work on a 
+"shortest path" algorithm for my Guys to use. It took me the better part of the
+day to get working, but I finally got to the point where I could build a maze
+by filling in (disconnecting) squares, and my Guy would work his way through 
+the maze to the other side of the board, using Dijkstra's algorithm to find the
+best path. He turns orange if he gets stuck.
+
+
+
+v 0.0.3  4-22-2007
+
+  Started work on a Display panel, that will show information about guys and 
+squares when you click on them. To help with this, I moved all the mouse code
+from the GameScreen to the TowerGame. Now all the interface stuff is where it
+belongs, in the parent. Added a 'highlight' to squares, so the interface is 
+aware of which square I'm mousing over. Could be useful later.
+
+  I got rid of my single, hardcoded guy and put in a list, and some methods to 
+add and get rid of guys. Now I can right-click to add another guy, and have a
+swarm of them moving through the maze. If I click too fast I get a 
+"concurrent modification" exception, I guess because I'm adding a guy to the 
+list as the update method is iterating through it. I'll see what I can do to
+avoid this. *** Well, I solved the problem, but it was a little different than
+I thought it would be. I tried making a copy of the list to iterate through,
+but that didn't help, even an 'UnmodifiableView'. So I added 'synchronized' to
+the addGuy() and updateGame() methods and I haven't had the problem since. Now
+I can make little catterpilars by clicking a bunch in a row.
+
+
+
+ v 0.0.4  4-28-2007
+
+  Created an SVN repository for the TowerGame class. Added all the files to it,
+and made a few minor changes (comments and such) to play around with checking 
+out and comitting files. Using TortoiseSVN explorer plugin to manage files. It
+was pretty easy to use once I got everything sorted out.
+
+  Now I can't decide what to do next. Once option is to clean up the user 
+interface and sort out all the states that I'll need to keep track of and stuff
+like that to figure out what the user is doing. Or, I could work on the guns 
+instead. Guns sound cool. I created an abstract class called Gun with a few 
+methods and such. I can't figure out if I want an abstract class or an 
+interface. I can't remember the rules for using an abstract class (probably 
+because I've never really needed one). Basically, I want a set of fields and
+methods that sub-guns all must have, but I don't remember how to deal with 
+these in the sub classes. An interface would be easier, because its less rigid.
+I should really just look up an inheritance guide on the net. *done*
+
+  I need to re-organize and clean up the Square class. I'm thinking it will 
+hold an instance of a Gun and this will replace the idea of a square being 
+"solid", which was just for testing anyway. The problem I see is that if I go
+changing Squares then I'll want to change the interface and make it possible to
+build guns. Then when later I want to improve the Guy's AI it will be a pain
+since I will have gotten rid of my nice simple maze-building capabilities. But
+I don't really feel like working on / perfecting the Guys right now. I don't 
+even think I'll be able to continue improving them until I get some Guns for 
+them to get shot by. Another question - who draws who? Do the Squares draw 
+themselves and if they have a gun then draw that? Yeah, that sounds good.
+
+Had to modify a few methods to get the program to compile while integrating the
+Gun. Added the Wall class that will just be a gun that doesn't shoot. Replaced
+all the fill() methods with a wall, so everything is basically the same as 
+before, except my pre-setup board is gone because I didn't feel like 
+replicating those 40-some fill() calls. Added the generic Bullet class, which 
+will be the parent for the bullets that the guns will fire. I'll probably need
+a getPosition() method for the guns so bullet know where to start from.
+
+I kind of got tired of the guns, so I added a public variable for each Guy to 
+store his path to the goal. Then I added drawing code to the GameScreen to draw
+each Guy's path. That's kind of cool to see the Guy's following their line to
+the goal, and to watch it change as you put stuff in their way. I also decided
+that I should make 'save' and 'load' actually do something, so I made them save
+the current squareList to a file. Right now it's always called 'board.txt', but
+that wouldn't be a big deal to change. Just need to add a JFileChooser. Had a 
+few bugs with the loading, but now it works to save and load mazes. I was 
+thinking of sending the program to dad, and thought it would be cool to send
+each other mazes too.
+
+Spent a couple hours messing with the border of Squares and how they're drawn.
+I added a state variable to the Square class to replace the various booleans 
+like selected and highlighted. Now a Square can be either Normal, Protected, or
+Invisible. Protected is like normal except you can't build there, and invisible
+is essentially a non-square. The Select and Highlight methods now just change 
+the Square's current border color. I also modified the click methods that fill
+squares to ignore protected and invisible Squares. I fiddled with the default
+constructor for the Board so that there is an outline of invisible Squares all
+the way around the outside (except for the entrances on either side), and there
+is a wall around the whole map, again, except for the entrances.
+
+idea: Include state information in saving of board. It would also be slick to
+      save the board in a text array instead of each coordinate on a line. So
+      Squares [0,0] [0,1] [1,0] and [1,1] would be saved like this:
+        1 1    And the program would be able to make sure there were enough
+        1 1    Squares on each line by counting the number of Tokens.
+
+*** I added this. It's sweet. *** (Also, I had to keep track of whether the 
+                                   Square was filled or not. If so, it's +4 )
+
+
+
+v 0.0.5  4-29-2007
+
+Added code to add Guns
+
+
+
+v 0.0.6  7-4-2007
+
+Started working on making the Guns aim. To do this they need to be able to 
+figure out where the Guys are. I thought originally I would just have the Board
+keep track of everything and have it figure out the aiming of each Gun. Then
+I thought it might be nice to let various Guns to their own aiming. So I need
+to keep track of which Guys are in which Square so the Gun can examine the 
+Squares around it. I tried a two-dimensional array of Vectors, which was ugly.
+So then I added a Vector to each Square to keep track of the Guys that are
+currently on it. So now I'll loop through the Guns (passing each one the list
+of Squares) and each Gun will examine the Squares nearby to see if there's a
+target there. I think I'll need to add a global array of Guns to make this
+easier.
+
+Also added: Guys fade out and dissapear once they reach the goal.
+
+
+
+
+
+
+****** To Do: ******
+
+-Add increase/decrease control to game speed
+-Add selection and display code
+-Add build / sell logic
+-Create gun firing / bullet creation code
+-
