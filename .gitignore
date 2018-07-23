@@ -1,0 +1,25 @@
+
+bin/
+dist/
+.classpath
+.project
+
+# Windows junk
+Thumbs.db
+$RECYCLE.BIN/
+Desktop.ini
+    
+# OSX junk
+.DS_Store
+._* 
+.Spotlight-V100
+.Trashes
+
+# Editor junk
+*.swp
+*.swo
+*~
+*.bat
+.idea
+*.tmproj
+
